@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="css/sample.css" />
+    <title>Firebase</title>
+  </head>
+
+  <body>
+    <header>
+      <h2 class="title">伝言メモ</h2>
+    </header>
+
+    <main style="display: none">
+      <div id="mainarea">
+        <form name="memo" action="？" method="post">
+          <table id="mainTable">
+            <tr>
+              <td class="yourname">担当</td>
+              <td>
+                <select id="yourNameOption" name="name">
+                  <option name="name">ーー</option>
+                  <option name="name">鈴木</option>
+                  <option name="name">田中</option>
+                  <option name="name">佐藤</option>
+                  <option name="name">阿部</option>
+                  <option name="name">渡辺</option>
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="fromwho">From</td>
+              <td>
+                <select id="fromWhoOption" name="from">
+                  <option name="from">ーー</option>
+                  <option name="from">病院</option>
+                  <option name="from">セールス</option>
+                  <option name="from">代理店</option>
+                  <option name="from">マーケティング</option>
+                  <option name="from">その他</option>
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="fromname">名前</td>
+              <td><input id="textBoxName" type="text" /></td>
+            </tr>
+
+            <tr>
+              <td class="adress">電話番号</td>
+              <td><input id="textBoxTell" type="text" /></td>
+            </tr>
+
+            <tr>
+              <td class="to">To 宛先</td>
+              <td><input id="textBoxTo" type="text" /></td>
+            </tr>
+
+            <tr>
+              <td class="reson">内容</td>
+              <td id="textroom">
+                <textarea id="message" name="message"></textarea>
+              </td>
+            </tr>
+          </table>
+
+          <ul>
+            <li id="save">登録</li>
+            <li id="remove">クリア</li>
+            <li id="clear">履歴削除</li>
+          </ul>
+        </form>
+      </div>
+
+      <div id="output" style="overflow: auto; height: 500px; display: none;"></div>
+
+        <!-- ここに追加データが挿入される -->
+      </table>
+    </main>
+    <footer></footer>
+
+    <!---jqueryを先に書く-->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <!---jsを読み込ませる-->
+    <script src="js/test.js"></script>
+
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        set,
+        onChildAdded,
+        remove,
+        onChildRemoved,
+      } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-database.js";
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "",
+        authDomain: "",
+        projectId: "",
+        storageBucket: "",
+        messagingSenderId: "",
+        appId: "",
+      };
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app); //RealtimeDBに接続
+      const dbRef = ref(db, "chat"); //RealtimeDB内の"chat"を使う
+
+      $("main").slideDown(1000);
+      $("#save").on("click", function () {
+        $("#output").show();
+
+        let day = new Date();
+        let dateString =
+          day.getFullYear() +
+          "年" +
+          (day.getMonth() + 1) +
+          "月" +
+          day.getDate() +
+          "日" +
+          day.getHours() +
+          "時" +
+          day.getMinutes() +
+          "分";
+
+        const msg = {
+          nowdate: dateString,
+          uname: $("#yourNameOption").val(),
+          text: $("#fromWhoOption").val(),
+          fromName: $("#textBoxName").val(),
+          Tell: $("#textBoxTell").val(),
+          BoxTo: $("#textBoxTo").val(),
+          message: $("#message").val(),
+        };
+        const newPostRef = push(dbRef);
+        set(newPostRef, msg);
+        alert("登録");
+        cleardata();
+      });
+
+   // 最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
+onChildAdded(dbRef, function (data) {
+  const msg = data.val(); // 追加された子データを取得
+
+  let h = `
+    <div class="dateshow">${msg.nowdate}</div>
+    <div class="sender">担当者：${msg.uname}</div>
+    <div class="show">
+      <div class="content">From:${msg.text}</div>
+      <div class="Tell">電話：${msg.Tell}</div>
+      <div class="BoxTo">To:${msg.BoxTo}</div>
+      <div class="internal">内容：${msg.message}</div>
+    </div>
+    <br>
+  `;
+  $("#output").append(h);
+  $("#output").show(); // データが存在する場合に表示
+});
+
+// Firebaseのデータ削除
+$("#clear").on("click", function () {
+  if (confirm("本当に削除しますか？")) {
+    remove(dbRef);
+    $("#output").hide(); // データ削除後に非表示
+    location.reload();
+  }
+});
+
+// remove クリックイベント実行
+$("#remove").on("click", function () {
+  cleardata();
+});
+// clearForm 関数
+function cleardata() {
+  $("#yourNameOption").html(`<select id="yourNameOption" name="name">
+    <option name="name">ーー</option>
+    <option name="name">鈴木</option>
+    <option name="name">田中</option>
+    <option name="name">佐藤</option>
+    <option name="name">阿部</option>
+    <option name="name">渡辺</option>
+  </select>`);
+
+  $("#fromWhoOption").html(`<select id="fromWhoOption" name="from">
+    <option name="from">ーー</option>
+    <option name="from">病院</option>
+    <option name="from">セールス</option>
+    <option name="from">代理店</option>
+    <option name="from">マーケティング</option>
+    <option name="from">その他</option>
+  </select>`);
+
+  $("#textBoxName").val("");
+  $("#textBoxTell").val("");
+  $("#textBoxTo").val("");
+  $("#message").val("");
+}
+
+
+    </script>
+  </body>
+</html>
