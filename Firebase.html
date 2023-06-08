@@ -146,6 +146,7 @@ onChildAdded(dbRef, function (data) {
   const msg = data.val(); // 追加された子データを取得
 
   let h = `
+  <div class="message" data-message-id="${data.key}">
     <div class="dateshow">${msg.nowdate}</div>
     <div class="sender">担当者：${msg.uname}</div>
     <div class="show">
@@ -154,11 +155,30 @@ onChildAdded(dbRef, function (data) {
       <div class="BoxTo">To:${msg.BoxTo}</div>
       <div class="internal">内容：${msg.message}</div>
     </div>
+  </div>
     <br>
   `;
   $("#output").append(h);
   $("#output").show(); // データが存在する場合に表示
+
+  //ダブルクリックで削除
+  function markAsCompleted(messageId) {
+      // Firebaseからメッセージを削除
+  remove(ref(db, `chat/${messageId}`));
+      // メッセージ要素をHTMLから削除
+  $(`.message[data-message-id="${messageId}"]`).remove();
+}
+  $('.message').on('dblclick', function() {
+  const messageId = $(this).data('message-id');
+  // 完了の処理を実行する関数を呼び出す
+  markAsCompleted(messageId);
 });
+
+});
+
+
+
+
 
 // Firebaseのデータ削除
 $("#clear").on("click", function () {
